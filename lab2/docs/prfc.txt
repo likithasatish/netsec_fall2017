@@ -1,0 +1,672 @@
+
+
+
+Network Working Group                                       C. Gaur, Ed.
+Request for Comments: 1                                    H. Bagga, Ed.
+Category: Standards Track                           C. Kimble-Brown, Ed.
+                                                            S. Syal, Ed.
+                                                          L. Satish, Ed.
+                                          JHU Network Security Fall 2017
+                                                            October 2017
+
+
+                    Playground Request For Comments
+
+Abstract
+
+   PEEP is a connection-oriented, end-to-end reliable and secure
+   protocol designed to fit into the layered hierarchy of protocols
+   which will support data transmission over the PLAYGROUND network.
+   The PEEP provides reliable inter-process communications between pairs
+   of processes in the host computers attached to the PLAYGROUND
+   network.
+
+Status of this Memo
+
+   This document specifies a Playgrounds standards track protocol for
+   the Playground Experiment, and requests discussion and suggestions
+   for improvements.  Distribution of this memo is unlimited.
+
+Copyright Notice
+
+   Copyright (c) 2017 SETH JAMES NIELSON.  All rights reserved.
+
+   This document is used solely for educational purposes.  Any citations
+   within this document are also for educational purposes and also for
+   technical reference.  If any of these cited elements are protected
+   under copyright, their inclusion here falls under Fair Use
+   provisions.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Gaur, et al.                 Standards Track                    [Page 1]
+
+RFC 1                            PRFC's                     October 2017
+
+
+Table of Contents
+
+   1.  Purpose / Technical Background . . . . . . . . . . . . . . . .  3
+   2.  Functional Specifications  . . . . . . . . . . . . . . . . . .  4
+     2.1.  Session Establishment  . . . . . . . . . . . . . . . . . .  4
+     2.2.  Session Termination  . . . . . . . . . . . . . . . . . . .  5
+     2.3.  Data Transmission  . . . . . . . . . . . . . . . . . . . .  5
+     2.4.  Error Handling . . . . . . . . . . . . . . . . . . . . . .  6
+     2.5.  Packet Descriptions  . . . . . . . . . . . . . . . . . . .  7
+     2.6.  State Machines . . . . . . . . . . . . . . . . . . . . . .  8
+   Authors' Addresses . . . . . . . . . . . . . . . . . . . . . . . .  9
+   Intellectual Property and Copyright Statements . . . . . . . . . . 11
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Gaur, et al.                 Standards Track                    [Page 2]
+
+RFC 1                            PRFC's                     October 2017
+
+
+1.  Purpose / Technical Background
+
+   Computer Communication is a part of our daily lives so developing a
+   reliable and secure transmission protocol for facilitating
+   communication between two computer machines has become very
+   important.  A reliable delivery protocol ensures that data sent by
+   the first machine will surely reach the other machine involved in the
+   communication whereas a secure transmission ensures that the data can
+   be sent over the communication network in a secure manner without
+   concerns of tampering or being eavesdropping.
+
+   In order to facilitate such communications, the Players Enjoy
+   Eavesdropping Protocol (PEEP) has been developed.  The PEEP is the
+   standard communications protocol that will be used for inter-process
+   communication over the PLAYGROUND network.
+
+   PEEP is a connection-oriented, end-to-end reliable and secure
+   protocol designed to fit into the layered hierarchy of protocols
+   which will support data transmission over the PLAYGROUND network.
+   The PEEP provides reliable inter-process communications between pairs
+   of processes in the host computers attached to the PLAYGROUND
+   network.
+
+   Protocol Layering
+
+   +---------------------+
+
+   | Higher-level |
+
+   +---------------------+
+
+   | PEEP |
+
+   +---------------------+
+
+   | Playground Network |
+
+   +---------------------+
+
+   PEEP is based on the concepts discussed by Dr. Seth J Neilson.  The
+   PEEP fits into a layered protocol architecture just above the
+   PLAYGROUND network, which provides a way for the PEEP to send and
+   receive variable-length segments of information enclosed in network
+   datagram 'envelopes'.
+
+
+
+
+
+
+
+Gaur, et al.                 Standards Track                    [Page 3]
+
+RFC 1                            PRFC's                     October 2017
+
+
+2.  Functional Specifications
+
+2.1.  Session Establishment
+
+   To identify the separate data streams that a PEEP may handle, the
+   PEEP provides a port identifier.  To uniquely identify a machine
+   connected to the PLAYGROUND network, each machine is provide a PEEP
+   address in order to send and receive data.
+
+   In PEEP, the getConnector() method is used to initialize a connection
+   to the other machine connected over the PLAYGROUND network.  The
+   established connection can be used to carry data in both direction,
+   that is, it is 'full duplex'.  There are several things that need to
+   be remembered about a connection.  To remember such details a data
+   structure called 'PEEP Control Block (PeepCB)' has been defined.
+
+   The 'three-way handshake' is the procedure used to establish a
+   connection.  This procedure is normally initiated by one PEEP and
+   responded to by another PEEP.  The procedure also works if two PEEP
+   simultaneously initiate the procedure.  A machine can try to initiate
+   a PEEP connection by sending a SYN packet to another machine.
+
+   PEEP A PEEP B
+
+   1.  CLOSED LISTEN
+
+   2.  SYN-SENT --> (SEQ=100)(CTL=SYN) --> SYN-RECEIVED
+
+   3.  ESTABLISHED (-- (SEQ=300)(ACK=101)(CTL=SYN,ACK) (-- SYN-RECEIVED
+
+   4.  ESTABLISHED --> (SEQ=101)(ACK=301)(CTL=ACK) --> ESTABLISHED
+
+   5.  ESTABLISHED --> (SEQ=101)(ACK=301)(CTL=ACK)(DATA) --> ESTABLISHED
+
+   In line 2 of the above figure, PEEP A begins by sending a SYN segment
+   indicating that it will use the sequence number 100.  In line 3, PEEP
+   B sends a SYN and acknowledges the SYN it received from PEEP B. The
+   ACK sent by PEEP B states that it is expecting to hear sequence 101,
+   acknowledging the SYN which had sequence 100.
+
+   At line 4, PEEP A responds with an empty segment containing an ACK
+   for PEEP Bs SYN; and in line 5, PEEP A sends some data.  The sequence
+   number in line 5 is same as in Line 4 because the ACK does not occupy
+   sequence number space.
+
+
+
+
+
+
+
+Gaur, et al.                 Standards Track                    [Page 4]
+
+RFC 1                            PRFC's                     October 2017
+
+
+2.2.  Session Termination
+
+   CLOSE is an operation meaning "I have no more data to send" The
+   notion of closing a full-duplex connection is subject to ambiguous
+   interpretation, of course, since it may not be obvious how to treat
+   the receiving side of the connection.  We have chosen to treat CLOSE
+   in a simple fashion.  The user who CLOSEs may continue to RECEIVE
+   until he is told that the other side has CLOSED also.  Thus, a
+   program could initiate several SENDs followed by a CLOSE, and then
+   continue to RECEIVE until signaled that a RECEIVE failed because the
+   other side has CLOSED.  We assume that the PEEP will signal a user,
+   even if no RECEIVEs are outstanding, that the other side has closed,
+   so the user can terminate his side gracefully.  A PEEP will reliably
+   deliver all buffers SENT before the connection was CLOSED so a user
+   who expects no data in return need only wait to hear the connection
+   was CLOSED successfully to know that all his data was received at the
+   destination PEEP.
+
+   PEEP A PEEP B
+
+   1.  ESTABLISHED ESTABLISHED
+
+   2.  (Close)
+
+   FIN-WAIT-1 --> (SEQ=100)(ACK=300)(CTL=FIN,ACK) --> CLOSE-WAIT
+
+   3.  FIN-WAIT-2 (-- (SEQ=300)(ACK=101)(CTL=ACK) (-- CLOSE-WAIT
+
+   4.  (Close)
+
+   TIME-WAIT (-- (SEQ=300)(ACK=101)(CTL=FIN,ACK) (-- LAST-ACK
+
+   5.  TIME-WAIT --> (SEQ=101)(ACK=301)(CTL=ACK) --> CLOSED
+
+   6. (2 MSL)
+
+   CLOSED
+
+   If a FIN arrives from the network, the receiving PEEP can ACK it and
+   tell the user that the connection is closing.  The user will respond
+   with a CLOSE, upon which the PEEP can send a FIN to the other PEEP
+   after sending any remaining data.  The PEEP then waits until its own
+   FIN is acknowledged after which it terminates the connection.
+
+2.3.  Data Transmission
+
+   The PEEP transmits data in both directions reliably and in order.
+   Once the handshake has been established and the connection is ready,
+
+
+
+Gaur, et al.                 Standards Track                    [Page 5]
+
+RFC 1                            PRFC's                     October 2017
+
+
+   the application layer on the client side will pass the data in bytes
+   down to the PEEP layer.  This data can be of any length.  The PEEP
+   layer is then responsible for breaking the data up into chunks of
+   1024 bytes or less, wrapping those chunks in type 5 PEEP Packets.
+   The first data packet sent by the client side (the side that
+   initiated the connection) will have a sequence number that is one
+   more than the previously sent ACK sequence number (on the client
+   side) or SYN-ACK sequence number (on the server side).  Then each of
+   the following data packets being sent by the client side will have a
+   sequence number equal to previous data packets sequence number plus
+   the length of the previous packets data plus 1.  Any time a data
+   packet is sent, a timer must be set so that if an ACK for that data
+   packet isnt received before the timer ends the PEEP expecting the ACK
+   will resend the data that wasnt acknowledged.  The PEEP that is
+   receiving data will only ever send an ACK for data received in order.
+
+2.4.  Error Handling
+
+   In PEEP, reliable transmission is facilitated by the sequence numbers
+   and acknowledgements.  Each data packet is assigned a sequence number
+   that is used to calculate the associated acknowledgement number that
+   will be in the ACK packet that is sent back in response.  The
+   acknowledgment number is the sequence number of the data packet it is
+   acknowledging plus the length of the data in the data packet.
+
+   Whenever a data packet is sent out, a timer associated with that
+   packet is started and the PEEP connection awaits the acknowledgement
+   for that packet.  If the acknowledgement comes before the timer
+   expires, then there is no retransmission.  If the timer expires and
+   there is still no acknowledgement, then there is a retransmission of
+   the same data.
+
+   Whenever a data packet is sent out, a timer associated with that
+   packet is started and the PEEP connection awaits the acknowledgement
+   for that packet.  If the acknowledgement comes before the timer
+   expires, then there is no retransmission.  If the timer expires and
+   there is still no acknowledgement, then there is a retransmission of
+   the same data.
+
+   It may also happen that the receiving side has sent the
+   acknowledgment but the sender didnt receive that, in this case, once
+   the timer expires on the sender side, then the sender will again send
+   the data and the receiver will check if it has already received that
+   data.  If it has already received that data, it will resend the
+   acknowledgment for that packet.  If the receiver has not received the
+   data, then it will take the data and pass an acknowledgment to the
+   sender for the data which was received.
+
+
+
+
+Gaur, et al.                 Standards Track                    [Page 6]
+
+RFC 1                            PRFC's                     October 2017
+
+
+2.5.  Packet Descriptions
+
+   In PEEP, a packet needs a DEFINITION IDENTIFIER, DEFINITION VERSION
+   and has an attribute called FIELDS which consists of Type, Sequence
+   Number, Checksum, Acknowledgement and Data field.  The packet is
+   defined in the following manner: -
+
+   class PEEPPacket(PacketType):
+
+   DEFINITION_IDENTIFIER = "PEEP.Packet"
+
+   DEFINITION_VERSION = "1.0"
+
+   FIELDS = [
+
+   ("Type", UINT8),
+
+   ("SequenceNumber", UINT32({Optional: True})),
+
+   ("Checksum", UINT16),
+
+   ("Acknowledgement", UINT32({Optional: True})),
+
+   ("Data", BUFFER({Optional: True}))
+
+   ]
+
+   There are 6 different packets types defined which can be used for
+   starting, maintaining and closing a connection on the PEEP.  They are
+   each differentiated by an identifier named 'Type'.  They are as
+   follows: -
+
+   SYN - Type 0
+
+   SYN - ACK - Type 1
+
+   ACK - Type 2
+
+   RIP - Type 3
+
+   RIP - ACK - Type 4
+
+   DATA - Type 5
+
+   The packet of TYPE 0,1 and 2 are used for handshake and to create a
+   connection between two machines running PEEP.  The packet of TYPE
+   2,3, and 4 are used to close a connection and the packet of TYPE 5 is
+   used to transmit data across PEEP.
+
+
+
+Gaur, et al.                 Standards Track                    [Page 7]
+
+RFC 1                            PRFC's                     October 2017
+
+
+2.6.  State Machines
+
+   Machine A
+
+   Initial SYN State (state 0)
+
+   - Prepare checksum for header fields
+
+   - Machine A sends SYN packet (TYPE=0) to Machine B, transitions to
+   state 1 where it waits for SYN-ACK(TYPE=1) packet.
+
+   SYN-ACK State (state 1)
+
+   - Wait for SYN-ACK packet.
+
+   - If not received after a timeout, terminate program.
+
+   - When received, compute checksum for header fields, if correct the
+   Machine A sends ACK packet(TYPE=2) to Machine B, transitions to
+   Transmission state (state 2).
+
+   - If checksum is not correct, ignore the packet.
+
+   Transmission State (state 2)
+
+   - Machine A can now send Data packets [ with DATA protocol]
+
+   Machine B
+
+   SYN-ACK State(State 0)
+
+   - Machine B awaits SYN packet from client and when it receives it, it
+   computes checksum and if correct, transmits SYN-ACK(TYPE-1) packet,
+   transition to SYN State(State 1)
+
+   - If packet not received then terminate handshake via TimeOut and
+   clear buffer.
+
+   SYN State(State 1)
+
+   - Machine B awaits Machine As ACK(TYPE = 2) packet, when received and
+   on correct checksum calculation transitions to Transmission
+   State(State 2)
+
+   - If packet is not received then terminate handshake via TimeOut and
+   clear buffer.
+
+   Transmission State(State 2)
+
+
+
+Gaur, et al.                 Standards Track                    [Page 8]
+
+RFC 1                            PRFC's                     October 2017
+
+
+   - Machine B can now send data packets to Machine A.
+
+
+Authors' Addresses
+
+   Chanakya Gaur (editor)
+   JHU Network Security Fall 2017
+   JHU Malone Hall/3400 North Charles St.
+   Baltimore, MD  21218
+   USA
+
+   Phone: +1 410-710-7737
+   Email: cgaur1@jhu.edu
+
+
+   Harsimar Bagga (editor)
+   JHU Network Security Fall 2017
+   JHU Malone Hall/3400 North Charles St.
+   Baltimore, MD  21218
+   USA
+
+   Phone: +1 443-570-4142
+   Email: hbagga2@jhu.edu
+
+
+   Channing Kimble-Brown (editor)
+   JHU Network Security Fall 2017
+   JHU Malone Hall/3400 North Charles St.
+   Baltimore, MD  21218
+   USA
+
+   Phone: +1 240-380-9857
+   Email: ckimble3@jhu.edu
+
+
+   Siddharth Syal (editor)
+   JHU Network Security Fall 2017
+   JHU Malone Hall/3400 North Charles St.
+   Baltimore, MD  21218
+   USA
+
+   Phone: +1 410-318-9824
+   Email: ssyal1@jhu.edu
+
+
+
+
+
+
+
+
+Gaur, et al.                 Standards Track                    [Page 9]
+
+RFC 1                            PRFC's                     October 2017
+
+
+   Likitha Satish (editor)
+   JHU Network Security Fall 2017
+   JHU Malone Hall/3400 North Charles St.
+   Baltimore, MD  21218
+   USA
+
+   Phone: +1 443-509-8407
+   Email: lsatish1@jhu.edu
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Gaur, et al.                 Standards Track                   [Page 10]
+
+RFC 1                            PRFC's                     October 2017
+
+
+Full Copyright Statement
+
+   Copyright (C) Seth James Nielson (2017).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the PLAYGROUND experiment or
+   other associated organizations, except by explicit permission.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by SETH JAMES NIELSON or his successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and SETH JAMES NIELSON and associated academic
+   institutions DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Intellectual Property
+
+   The PLAYGROUND framework and student submissions for PLAYGROUND are
+   intended to be free of any intellectual property conflicts.  All
+   submitting parties, especially students, are not allowed to submit
+   source code, specifications, or other components that are known to be
+   protected by copyright, patents, or other IP mechanisms.  Students
+   submitting creative content grant shared rights and ownership of
+   their content to the PLAYGROUND project.  Specifically, any
+   submission can be used in future educational settings including
+   subsequent PLAYGROUND experiments.
+
+   Any interested party is invited to bring to the experiment director's
+   attention any copyrights, patents or patent applications, or other
+   proprietary rights which may cover technology that may be currently
+   in use without permission.
+
+   It should be noted that these statements have not been reviewed by
+   legal counsel.  Moreover, the academic institutions at which
+   PLAYGROUND experiments take place may have additional or even
+   conflicting copyright and intellectual property rules.  Accordingly,
+   concerned parties may need to contact their own lawyer and/or
+   resources at their institution to understand the rights and
+
+
+
+Gaur, et al.                 Standards Track                   [Page 11]
+
+RFC 1                            PRFC's                     October 2017
+
+
+   limitations associated with code donated to a PLAYGROUND experiment.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Gaur, et al.                 Standards Track                   [Page 12]
+

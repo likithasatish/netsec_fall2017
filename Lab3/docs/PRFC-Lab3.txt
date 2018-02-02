@@ -1,0 +1,831 @@
+
+
+
+Network Working Group                                       C. Gaur, Ed.
+Request for Comments: 1                                   L. Satish, Ed.
+Category: Standards Track                                   S. Syal, Ed.
+                                                           H. Bagga, Ed.
+                                                    C. Kimble-Brown, Ed.
+                                          JHU Network Security Fall 2017
+                                                           November 2017
+
+
+                    Playground Request For Comments
+
+Abstract
+
+   The PEEP Protocol is designed to provide reliable transpiration
+   between hosts in PLAYGROUND (Poly-Localized Algorithmic Yields
+   Generated Remotely on Unused Network Devices) system.  The protocol
+   can distinguish the data between two different sessions and ensure
+   that the data arrives.
+
+Status of this Memo
+
+   This document specifies a Playgrounds standards track protocol for
+   the Playground Experiment, and requests discussion and suggestions
+   for improvements.  Distribution of this memo is unlimited.
+
+Copyright Notice
+
+   Copyright (c) 2017 SETH JAMES NIELSON.  All rights reserved.
+
+   This document is used solely for educational purposes.  Any citations
+   within this document are also for educational purposes and also for
+   technical reference.  If any of these cited elements are protected
+   under copyright, their inclusion here falls under Fair Use
+   provisions.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Gaur, et al.                 Standards Track                    [Page 1]
+
+RFC 1                            PRFC's                    November 2017
+
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . .     2
+     1.1.  Requirements Language . . . . . . . . . . . . . . . . .     2
+   2.  Playground Layer Secure Protocol . . . . . . . . . . . . . .    2
+     2.1.  Introduction  . . . . . . . . . . . . . . . . . . . . .     2
+     2.2.  Message Structure . . . . . . . . . . . . . . . . . . .     3
+       2.2.1.  PLAYGROUND LAYER SECURE (PLS) Hello Packet  . . . .     3
+       2.2.2.  PLAYGROUND LAYER SECURE (PLS) Key Exchange Packet .     4
+       2.2.3.  PLAYGROUND LAYER SECURE (PLS) Handshake Done Packet     4
+       2.2.4.  PLAYGROUND LAYER SECURE (PLS) Data Packet . . . . .     5
+       2.2.5.  PLAYGROUND LAYER SECURE (PLS) Close Packet  . . . .     5
+     2.3.  Generation of Certificates  . . . . . . . . . . . . . .     5
+     2.4.  Key Derivation  . . . . . . . . . . . . . . . . . . . .     6
+     2.5.  Error Handling  . . . . . . . . . . . . . . . . . . . .     7
+   3.  Playground Secure Layer (PLS) Implementation  . . . . . . .     7
+     3.1.  Handshake . . . . . . . . . . . . . . . . . . . . . . .     7
+       3.1.1.  Data Transmission . . . . . . . . . . . . . . . . .     9
+   4.  Copyright Information . . . . . . . . . . . . . . . . . . .    10
+   5.  Normative References  . . . . . . . . . . . . . . . . . . .    10
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . .    11
+   Intellectual Property and Copyright Statements  . . . . . . . .    13
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Gaur, et al.                 Standards Track                    [Page 2]
+
+RFC 1                            PRFC's                    November 2017
+
+
+1.  Introduction
+
+   This PRFC (PLAYGROUND Request for Comments) is a formal document that
+   specifies the format standards and gives general information of the
+   security protocol at the transport Layer.  The PRFC is designed to
+   facilitate a transport layer mechanism with a purpose of security and
+   reliability, which is similar with RFC, a publication of the Internet
+   Engineering Task Force (IETF).  The PLAYGROUND, developed by Seth
+   James Nielson, is a python framework designed to provide a test bed
+   for network security researchers to develop secure and reliable
+   protocols.  The PLAYGROUND mimics the capabilities of a real internet
+   connection but allows lesser number of attacks and functionalities.
+   The overall structure of the PRFC is divided into two main parts,
+   secure layer introduction and secure layer specifications &
+   implementation.  Section II gives brief introduction to the
+   Playground Layer Secure Protocol (PLS).  Section III describes the
+   Playground Layer Secure Protocol specifications.  Section IV deals
+   with the implementation of the Playground Layer Secure Protocol.
+
+1.1.  Requirements Language
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+   document are to be interpreted as described in RFC 2119 [RFC2119].
+
+
+2.  Playground Layer Secure Protocol
+
+2.1.  Introduction
+
+   The primary goal of the Playground Layer Secure Protocol is to
+   provide privacy and data integrity between the applications using the
+   Playground Layer Secure Protocol.  The Playground Layer Secure
+   Protocol consists of two layers - handshake protocol and data
+   protocol.  Below the Playground Layer Secure Protocol lies the
+   reliable transport protocol known as Players Enjoy Eavesdropping
+   Protocol (PEEP) which helps in reliable end-to-end delivery of data.
+
+   The Playground Layer Secure (PLS) data protocol provides connection
+   security that has two basic properties:
+
+   -The connection is private: Symmetric cryptography is used for data
+   encryption (e.g., AES).  The keys for the symmetric encryption are
+   generated uniquely for each connection and are based on the secret
+   negotiated by the Playground Layer Secure (PLS) Handshake protocol.
+
+   -The connection is reliable: Data protocol includes a message
+   integrity check using a keyed MAC.  Secure hash functions (e.g.,
+
+
+
+Gaur, et al.                 Standards Track                    [Page 3]
+
+RFC 1                            PRFC's                    November 2017
+
+
+   SHA-1) are used for MAC computations.
+
+   -The Playground Layer Secure (PLS) data protocol is used for the
+   encapsulation of data which is received from various higher layer
+   protocols.  The Playground Layer Secure (PLS) handshake protocol,
+   allows the server and client to authenticate each other and to
+   negotiate an encryption algorithm and cryptographic keys before the
+   application protocol transmits or receives its first byte of data.
+   The Playground Layer Secure (PLS) handshake provides connection
+   security that has three basic properties:
+
+   -The peer's identity can be authenticated using asymmetric or public
+   key cryptography (e.g.  RSA).  This type of authentication is always
+   done before sending the data.
+
+   -The negotiation of the shared secret is secure: the negotiated
+   secret is unavailable to the eavesdroppers, and for any authenticated
+   connection the secret cannot be obtained, even by the attacker who
+   places himself in the middle of the connection.
+
+   -The negotiation is reliable: no attacker can modify the negotiation
+   communication without being detected by the peers involved in the
+   connection.
+
+   The major advantage of using Playground Layer Secure (PLS) is that it
+   is application layer protocol independent.  The higher-level
+   protocols can lay on the top of the Playground Layer Secure (PLS)
+   protocol transparently.
+
+2.2.  Message Structure
+
+   In order to form a layer for secure transmission of data, there are
+   five packet types that are associated with this secure layer.
+
+2.2.1.  PLAYGROUND LAYER SECURE (PLS) Hello Packet
+
+   The Playground Layer Secure (PLS) Hello packet is the first data
+   packet which is sent by the client to the server in order to initiate
+   a connection.
+
+
+              FIELDS = [
+                   ("Nonce", UINT64),
+                   ("Certs", LIST(BUFFER))
+                       ]
+                   Figure 1.
+
+
+
+
+
+Gaur, et al.                 Standards Track                    [Page 4]
+
+RFC 1                            PRFC's                    November 2017
+
+
+   The Playground Layer Secure (PLS) Hello packet has two fields -
+
+   1) Nonce - It's a random unsigned 64-bit integer.
+
+   2) Certs - This is the list of the certificates that are sent by the
+   client to the server.  Generally, the client sends its own
+   certificate and the root CA certificate.
+
+2.2.2.  PLAYGROUND LAYER SECURE (PLS) Key Exchange Packet
+
+   The Playground Layer Secure (PLS) key exchange packet helps in
+   exchanging the data which will be later used for generation of the
+   key which will be used for symmetric encryption of the data.
+
+
+              FIELDS = [
+                   ("PreKey", BUFFER),
+                   ("NoncePlusOne", UINT64),
+                       ]
+                   Figure 2.
+
+
+   This packet has the following contents -
+
+   1) Pre-Key - This is the 128-bit data which will be later needed for
+   key generation.
+
+   2) Nonce Plus One - One plus the nonce sent in the first hello
+   packet.
+
+2.2.3.  PLAYGROUND LAYER SECURE (PLS) Handshake Done Packet
+
+   The Playground Layer Secure (PLS) handshake done packet marks the
+   completion of the handshake.  Both, the server and the client send
+   the handshake done packet after the key exchange is done.
+
+
+              FIELDS = [
+                   ("ValidationHash", BUFFER)
+                       ]
+                   Figure 3.
+
+
+   The contents of the packet are -
+
+   1) Validation Hash - This the hash of all the previous messages which
+   are sent between the client and the server.
+
+
+
+
+Gaur, et al.                 Standards Track                    [Page 5]
+
+RFC 1                            PRFC's                    November 2017
+
+
+2.2.4.  PLAYGROUND LAYER SECURE (PLS) Data Packet
+
+   After a successful handshake, the client and server can start to
+   receive and send the data.  The data receiving and sending is done
+   with the help of Playground Layer Secure (PLS) Data Packet.
+
+
+              FIELDS = [
+                   ("Ciphertext", BUFFER),
+                   ("Mac", BUFFER)
+                       ]
+                    Figure 4.
+
+
+   The Playground Layer Secure (PLS) data packet consists of the
+   following fields -
+
+   1) Cipher Text - if either the client/server has to send the data it
+   has to be encrypted.  This field consists of the encrypted data.
+
+   2) MAC - This is the Message Authentication Code.  The MAC is used to
+   verify and check if the data has been tampered with, while it was in
+   transit.
+
+2.2.5.  PLAYGROUND LAYER SECURE (PLS) Close Packet
+
+   The Playground Layer Secure (PLS) close packet is the packet which
+   informs the client/server about the closure of the connection.  It's
+   the last packet sent by both of the communicating parties before the
+   final closure of the connection.
+
+
+              FIELDS = [
+                   ("Error", STRING(OPTIONAL))
+                       ]
+                    Figure 5.
+
+
+2.3.  Generation of Certificates
+
+   The server or client certificates are the basis of the public key
+   cryptography used by the Playground Layer Secure (PLS) protocol.  The
+   certificates are used by the client and the server in order to
+   authenticate themselves to each other.  The generation of the
+   certificates is a three step process -
+
+   1) Generation of a private key -
+
+
+
+
+Gaur, et al.                 Standards Track                    [Page 6]
+
+RFC 1                            PRFC's                    November 2017
+
+
+   This step helps in the generation of the private key which will be
+   used by the communicating parties to decrypt the data which was
+   encrypted by their respective public keys.  Playground Layer Secure
+   (PLS) uses RSA 2048 for the private keys.  The following command
+   helps in generation of the private key
+
+
+             openssl genrsa -out <private-key-file-name> 2048
+
+
+   2) Generating a certificate signing request -
+
+   In order to use the certificate, the root certification authority has
+   to sign the certificate so that the client or the server can use it.
+   A certificate signing request (CSR) is a message sent from an
+   applicant to a certificate authority in order to apply for a digital
+   identity certificate.  The CSR can be generated using the following -
+
+
+            openssl req -new -key <private-key-file-name> -out <file>
+
+
+   3) Verification of the certificates -
+
+   After the certificates are generated and signed by the root
+   certification authority, it also needs to be verified so that the
+   client or the server can start using the certificate.  The
+   certificates can be verified using the following '
+
+
+             openssl verify -verbose -CAfile root.crt
+
+
+2.4.  Key Derivation
+
+   The client and the server need to generate keys for the symmetric
+   encryption of data.  The client needs to generate the following pairs
+   of keys -
+
+             EKc : Client Encryption Key
+             EKs : Client Decryption Key
+             MKc : Client MAC key
+             MKs : Client's Verification Key
+
+   The same keys are also generated by the server side also.  Each key
+   generated by both, the client and the server, is 128 Bits.  Apart
+   from the keys, the client and the server also generate an IVc
+   ('Client Encryption IV') and IVs ('Server encryption IV') which are
+
+
+
+Gaur, et al.                 Standards Track                    [Page 7]
+
+RFC 1                            PRFC's                    November 2017
+
+
+   of 128 Bits.  In order to derive each key, a stream is generated using
+   repeated SHA1 hashing of the seed:
+
+   'PLAYGROUND LAYER SECURE (PLS)1.0'+ Nonce by the Client+ Nonce by the
+   server + Pre-Shared key of client + Pre-shared key of server
+
+   Each iteration of the hash generates 160 bits and five such
+   iterations will generate 800 bits.
+
+   block_0 = hash('PLAYGROUND LAYER SECURE (PLS)1.0'+Nc+Ns+PKc+PKs)
+
+   block_1 = hash(block_0)
+
+   block_2 = hash(block_1)
+
+   block_3 = hash(block_2)
+
+   block_4 = hash(block_3)
+
+   These 800 bits are taken to create 768 bits of keys with 32 bits
+   discarded.  After five iterations, following are generated:
+
+            EKc = first 128 bits
+            EKs = second 128 bits
+            IVc = third 128 bits
+            IVs = fourth 128 bits
+            MKc = fifth 128 bits
+            MKs = sixth 128 bits
+
+2.5.  Error Handling
+
+   Error handling in the Playground Layer Secure (PLS) Handshake
+   protocol is very simple.  When an error is detected, the detecting
+   peer sends a message to the other peer.  Upon transmission or receipt
+   of a fatal alert message, both parties immediately close the
+   connection by sending the Playground Layer Secure (PLS) Close()
+   message.  Server and the client should dispose all the data related
+   to the terminated session.
+
+
+3.  Playground Secure Layer (PLS) Implementation
+
+3.1.  Handshake
+
+   The cryptographic parameters of the data protocol are produced by the
+   Playground Layer Secure (PLS) handshake protocol, which operates on
+   the top of the Playground Layer Secure(PLS) data protocol.  When a
+   Playground Layer Secure(PLS) client and server first start
+
+
+
+Gaur, et al.                 Standards Track                    [Page 8]
+
+RFC 1                            PRFC's                    November 2017
+
+
+   communication, they try to authenticate each other using in the
+   public-key encryption i.e. by verifying the certificates.  The
+   public-key encryption is also used in order to generate shared
+   secrets.
+
+   Client                                                        Server
+
+   Message 1:Client Hello     ----------------------->
+
+   Message 2:                 <-----------------------     Server Hello
+
+   Message 3:(PLS)KeyExchange ----------------------->
+
+   Message 4:                 <----------------------- (PLS)KeyExchange
+
+   Message 5:(PLS)HandshakeDone --------------------->
+
+   Message 6:                  <---------------------(PLS)HandshakeDone
+
+   The Playground Layer Secure (PLS) Handshake protocol involves the
+   following steps:
+
+   -Exchange the important cryptographic parameters to allow the client
+   and server to decide on a secret.
+
+   -Exchange certificates and cryptographic information to allow the
+   client and server to authenticate themselves
+
+   -Provide the security parameters to the data layer
+
+   -Allow the client and the server to verify that their peer has
+   calculated the same security parameters and the handshake has been
+   completed without the tampering by an attacker.
+
+   In Playground Layer Secure (PLS), the higher layers should not be
+   reliant on whether Playground Layer Secure (PLS) always negotiates
+   the strongest possible connection between the two communicating
+   parties.  The fundamental rule should be that the higher levels
+   should be aware of the information that is needed to be transmitted
+
+
+
+Gaur, et al.                 Standards Track                    [Page 9]
+
+RFC 1                            PRFC's                    November 2017
+
+
+   over a channel less secure than what they need.
+
+   The Playground Layer Secure (PLS) handshake requires up to six
+   messages to be transmitted between the client and the server in order
+   to establish a secure session.  The first message is sent by the
+   client and it consists of a random 64-bit nonce and the client
+   certificates along with the certificate of the root certification
+   authority.  After receiving the first hello message from the client,
+   the server also transmits a hello message to the client.  The server
+   hello message contains the server's public certificate and a random
+   nonce which is generated by the server.
+
+   Once the hello messages are exchanged and the required certificates
+   have been verified, the client sends the server with a 128-bits of
+   data which will be used by both, the client and the server in order
+   to generate keys.  Along with the 128-bits of data, the client also
+   sends one plus the nonce sent in the client hello message.  Before
+   sending the 128-Bits of the data, the client extracts the public key
+   from the certificate received from the server, using the public key,
+   the client encrypts this 128-bits of data and then sends it to the
+   server.  The Playground Layer Secure (PLS) uses RSA encryption with
+   OAEP padding for encryption of data.  Once the server receives the
+   Playground Layer Secure (PLS) Key Exchange packet from the client,
+   the server also generates 128-bits of data and encrypts with the
+   public key of the client before sending it.  Once the 128-bits of the
+   data is encrypted, the server also appends one plus the nonce sent in
+   the server hello message.
+
+   Once the key exchange messages are transmitted between both the
+   client and the server, the client sends a message to the server which
+   contains the hash of the previous four messages.  Once the handshake
+   finished messaged is received by the server, the server also
+   generates the hash of the previous four messages and sends the hash
+   to the client.  This marks the completion of the handshake.
+
+3.1.1.  Data Transmission
+
+   The first byte of the user or the application data is only sent after
+   the handshake is completely done.  In order to start sending the
+   data, the client and the server create an encryption and decryption
+   engine.
+
+   For the client side, the encryption engine is configured with
+   client's encryption Key (EKc) and an initialization vector as the
+   initial counter value.  The decryption engine for the client side is
+   configured with the client's decryption key i.e. server's encryption
+   key and server's initialization vector.
+
+
+
+
+Gaur, et al.                 Standards Track                   [Page 10]
+
+RFC 1                            PRFC's                    November 2017
+
+
+   For the server side, the encryption engine is configured with the
+   server's encryption key (EKs) and a server's initialization vector as
+   the initial counter value.  The decryption engine for the server side
+   is configured with the server's decryption key i.e. client's
+   encryption key and client's initialization vector.
+
+   In order for the data receiver to verify if it's an untampered data,
+   message authentication code (MAC) is also used.  The message
+   authentication code uses SHA-1 in order to generate a hash of the
+   whole message for verification.  In order to send the data, the plain
+   text P is encrypted with the respective encryption engine to produce
+   a cipher text(C). The produced cipher text(C) is then passed through
+   the message authentication code engine to produce a verification code
+   (V). Once the sender generates the cipher text and the verification
+   code, this whole data is then sent in a Playground Layer Secure (PLS)
+   data message (C,V).
+
+   When the data is received, the cipher text(C)is extracted and passed
+   through the verification engine in order to produce a local reference
+   verification code(V').  If the verification code(V), which is already
+   present in the received data, does not match the local reference
+   verification code(V'), then the packet is discarded.  In this case,
+   only the defective packet is discarded but connection still
+   continues.  But if the local reference verification code(V') is
+   equal to the verification code(V) already present in the packet,
+   then the cipher text is passed to the decryption engines to produce
+   plain text P'.  This plain text is then passed to the higher layer.
+
+   Either of the communicating peers can close the connection with the
+   help of the Playground Layer Secure(PLS) Close packet without any
+   error message but if, either of the communicating peers are shutting
+   down the connection due to an error, an error message shall be
+   specified in the Playground Layer Secure(PLS) Close packet
+
+
+4.  Copyright Information
+
+   The PLAYGROUND experiment is still new and has not yet developed a
+   policy that has been reviewed by legal counsel.  However, at present,
+   the following text MUST be used in the PRFC's.
+
+   The copyright notice on the front page of the PRFC should read:
+   "Copyright (c) 2017 SETH JAMES NIELSON.  All rights reserved.
+
+
+5.  Normative References
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+
+
+
+Gaur, et al.                 Standards Track                   [Page 11]
+
+RFC 1                            PRFC's                    November 2017
+
+
+              Requirement Levels", BCP 14, RFC 2119, DOI 10.17487/
+              RFC2119, March 1997,
+              <https://www.rfc-editor.org/info/rfc2119>.
+
+   [RFC2360]  Scott, G., "Guide for Internet Standards Writers", BCP 22,
+              RFC 2360, DOI 10.17487/RFC2360, June 1998,
+              <https://www.rfc-editor.org/info/rfc2360>.
+
+
+Authors' Addresses
+
+   Chanakya Gaur (editor)
+   JHU Network Security Fall 2017
+   JHU 160 Malone Hall/3400 North Charles St.
+   Baltimore, MD  21218
+   USA
+
+   Phone: +1 410-710-7737
+   Email: cgaur1@jhu.edu
+
+
+   Likitha Satish (editor)
+   JHU Network Security Fall 2017
+   JHU 160 Malone Hall/3400 North Charles St.
+   Baltimore, MD  21218
+   USA
+
+   Phone: +1 443-509-8407
+   Email: lsatish1@jhu.edu
+
+
+   Siddharth Syal (editor)
+   JHU Network Security Fall 2017
+   JHU 160 Malone Hall/3400 North Charles St.
+   Baltimore, MD  21218
+   USA
+
+   Phone: +1 410-318-9824
+   Email: ssyal1@jhu.edu
+
+
+
+
+
+
+
+
+
+
+
+
+Gaur, et al.                 Standards Track                   [Page 12]
+
+RFC 1                            PRFC's                    November 2017
+
+
+   Harsimar Bagga (editor)
+   JHU Network Security Fall 2017
+   JHU 160 Malone Hall/3400 North Charles St.
+   Baltimore, MD  21218
+   USA
+
+   Phone: +1 443-570-4142
+   Email: hbagga2@jhu.edu
+
+
+   Channing Kimble-Brown (editor)
+   JHU Network Security Fall 2017
+   JHU 160 Malone Hall/3400 North Charles St.
+   Baltimore, MD  21218
+   USA
+
+   Phone: +1 240-380-9857
+   Email: ckimble3@jhu.edu
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Gaur, et al.                 Standards Track                   [Page 13]
+
+RFC 1                            PRFC's                    November 2017
+
+
+Full Copyright Statement
+
+   Copyright (C) Seth James Nielson (2017).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the PLAYGROUND experiment or
+   other associated organizations, except by explicit permission.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by SETH JAMES NIELSON or his successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and SETH JAMES NIELSON and associated academic
+   institutions DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Intellectual Property
+
+   The PLAYGROUND framework and student submissions for PLAYGROUND are
+   intended to be free of any intellectual property conflicts.  All
+   submitting parties, especially students, are not allowed to submit
+   source code, specifications, or other components that are known to be
+   protected by copyright, patents, or other IP mechanisms.  Students
+   submitting creative content grant shared rights and ownership of
+   their content to the PLAYGROUND project.  Specifically, any
+   submission can be used in future educational settings including
+   subsequent PLAYGROUND experiments.
+
+   Any interested party is invited to bring to the experiment director's
+   attention any copyrights, patents or patent applications, or other
+   proprietary rights which may cover technology that may be currently
+   in use without permission.
+
+   It should be noted that these statements have not been reviewed by
+   legal counsel.  Moreover, the academic institutions at which
+   PLAYGROUND experiments take place may have additional or even
+   conflicting copyright and intellectual property rules.  Accordingly,
+   concerned parties may need to contact their own lawyer and/or
+   resources at their institution to understand the rights and
+
+
+
+Gaur, et al.                 Standards Track                   [Page 14]
+
+RFC 1                            PRFC's                    November 2017
+
+
+   limitations associated with code donated to a PLAYGROUND experiment.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Gaur, et al.                 Standards Track                   [Page 15]
+
